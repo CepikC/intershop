@@ -1,0 +1,274 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: serik
+      changes:
+        - createTable:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: NUMERIC(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(1000)
+              - column:
+                  name: img_path
+                  type: TEXT
+
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: total_sum
+                  type: NUMERIC(10,2)
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: order_items
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_items_item
+                    references: items(id)
+              - column:
+                  name: count
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: NUMERIC(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: order_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_order_items_order
+                    references: orders(id)
+
+  - changeSet:
+      id: 2
+      author: serik
+      changes:
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Apple iPhone 15 Pro"
+              - column:
+                  name: price
+                  valueNumeric: 699990.00
+              - column:
+                  name: description
+                  value: "Флагманский смартфон Apple с чипом A17 Pro"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Samsung Galaxy S24"
+              - column:
+                  name: price
+                  valueNumeric: 599990.00
+              - column:
+                  name: description
+                  value: "Флагманский смартфон Samsung с AMOLED-дисплеем"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Xiaomi Redmi Note 13"
+              - column:
+                  name: price
+                  valueNumeric: 199990.00
+              - column:
+                  name: description
+                  value: "Доступный смартфон Xiaomi с батареей на 5000 мАч"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Samsung Galaxy S24 Ultra"
+              - column:
+                  name: price
+                  valueNumeric: 649990.00
+              - column:
+                  name: description
+                  value: "Топовый смартфон Samsung с камерой 200 МП"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "MacBook Pro 16 (M3 Max)"
+              - column:
+                  name: price
+                  valueNumeric: 1249990.00
+              - column:
+                  name: description
+                  value: "Профессиональный ноутбук Apple на чипе M3 Max"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Sony PlayStation 5"
+              - column:
+                  name: price
+                  valueNumeric: 299990.00
+              - column:
+                  name: description
+                  value: "Игровая консоль нового поколения"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Apple Watch Ultra 2"
+              - column:
+                  name: price
+                  valueNumeric: 399990.00
+              - column:
+                  name: description
+                  value: "Премиальные умные часы Apple"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "AirPods Pro 2"
+              - column:
+                  name: price
+                  valueNumeric: 119990.00
+              - column:
+                  name: description
+                  value: "Беспроводные наушники с шумоподавлением"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Asus ROG Zephyrus G14"
+              - column:
+                  name: price
+                  valueNumeric: 899990.00
+              - column:
+                  name: description
+                  value: "Игровой ноутбук с RTX 4070"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "GoPro HERO12 Black"
+              - column:
+                  name: price
+                  valueNumeric: 199990.00
+              - column:
+                  name: description
+                  value: "Экшн-камера с улучшенной стабилизацией"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "Kindle Paperwhite 11"
+              - column:
+                  name: price
+                  valueNumeric: 79990.00
+              - column:
+                  name: description
+                  value: "Электронная книга с подсветкой"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: title
+                  value: "DJI Mini 4 Pro"
+              - column:
+                  name: price
+                  valueNumeric: 499990.00
+              - column:
+                  name: description
+                  value: "Компактный дрон с 4K-камерой"
+              - column:
+                  name: img_path
+                  value: "iVBORw0KGgoAAAANSUhEUgAAACIAAAAUCAYAAADoZO9yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATYSURBVEhLVZZNjh1JFYW/cyNfvXLZVdhS0930ClgCYgGIISAWwYBVsAYGCMQGQGyAGQMGjEEt0zTqgbHKuO12/fT7ycyIexhEvLJJ6Srz5Yu8ceKce26EXn3+R9vGgBOcJjPBAkAAMpIJgWTAZFuRQAj1QSAhBBjk9997vLeQhSVs+pwCFOjtl3+wx2DQANNT9D/eXyEhOqh0IhLbqKccIfqcYyHuYOQBZOTN7Mn7tCIyZ5wz9oJzwbnirEAD9TANlJgk7Q7Q4PFgEh6ikc73Mb5Jezz3gMROyIbc0OvnvxskBTggx7086IJzrHQw1NfaEzlPFPpBGsMDmz1Ffy+NOAmYOcrA6Ot//sb9A4EDuXS+yuD1w2vQ/PDTxtnlwRCKUSFDZnrt9TLo76QO4FSUToNNKCYUBUWhRKEUUYrADbsCFVgQM9IRdESnYEaqhJISRkokKCGmESUgAiDRkJpIiEQTlDNRNkIvP/+9IQkSAUFfnWVQ11xq2K2TrrGa4YIeXU5prJpABFbnpNeQT36gRAy5TkoYvfryT0YNsRCsiErInXYSvIIqpgLrAHTSJnD2iU9252RpNHIM8BpSjzrptQGSeo7dN3+zfUTsgD1oARaoa3cOK7CQXgaQOtwxlncC8OCgrnmfc1iU/MDHvVe12sg0oQAC3d/93ekd8g3BHaEd6NABqLMACzBjr6NmOmMdgrt78IOT4sPecnLUGNsxm2y9aZbo9tTt/i/OvEO+QdwS7AmOmAXRi1Xqd7P2yWhj4vcS2t09xoRNUWcm7U7gqL3ukN44w0IxQQrdHH7ryi1ut0w6ojziOrPZFDIrUxgVICvZFjIbzUlMI6+GRbtvyezgojdYHlQZxek0SuhGL3gx7d2Crm9/6db2TFTOJ9hgZIODdlxx625prQHJZlvQNnA2MkyzSYwkytSd00EZtx7/13gNRQWvZr2v7G8Wvn0zo9c3P3dgtiGiJut+xTPcvT5wuFvJdqLSxCSePN1ycXXG5mrqTa/wINSpGBl7niyKuqO8muXQyBVyMcs+2d3M7G4W5tuGdm9+ZtQHzm+PfPNqx+F2Zb2vrN9WbJimMvSHs4uJ8ycbnn58wXRR2DwulG2B6QP39LqlLsYN1mOyu1u4v1tYj0mroi2wHqEuQZsD3b/4qb2rzG9X3l3vuH1zJA/JNibanDjFpkw0w1obVuIJyqNgezlxcbXl0eUZm/MNESLT1KVxPKzMh0pdk3k2h13lsG9kFtY1qLVQcwJvaTmh67/+xNf/ueHlV++4f7MweeLJo8dsNpsuCxOlnPWaySRlKgsujdiKshXT2cS0KUDQWjLPC/O80GpnJDOoq6g1yFaotbDWYM3CmoV0oD//+sf+4vkLnv/jFbt3K8++c8XHH33K1Xev0KYwxZagkDn2zGKqK3EGSSXVsERE6WDXpGbvNZmmZQfTmsgW1CpgQ21iTVEN1aBf/eIH/tcXL/jq319z2CdPL6949uwjPvnsEy6fXrHdbGnV1HWcRWRS4DDNjexNglAhonQGPM4u2cjW+mHLQPYtAQcm+unFUN3Qj374fb+8/i+HQ6OUc87OLyjljMuLx3z6vc+4enzJsqxgaO52LWVDE2R2GK013IxUECLHzl3b2CzdaLX2VmARCooKERqHrcr/AHO4uxup/+Z/AAAAAElFTkSuQmCC"
