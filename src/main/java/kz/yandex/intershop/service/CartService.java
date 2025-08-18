@@ -3,11 +3,14 @@ package kz.yandex.intershop.service;
 import kz.yandex.intershop.model.Item;
 import kz.yandex.intershop.repository.ItemRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.annotation.SessionScope;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@SessionScope
 public class CartService {
 
     private final ItemRepository itemRepository;
@@ -23,7 +26,7 @@ public class CartService {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .peek(item -> item.setCount(cartItems.get(item.getId())))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public int getItemCount(Long itemId) {
