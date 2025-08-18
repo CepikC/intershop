@@ -18,8 +18,7 @@
             <table>
                 <tr>
                     <td>
-                        <img width="300" height="300"
-                             th:src="'data:image/png;base64,' + ${item.imgPath}" />
+                        <img width="300" height="300" th:src="@{'/images/' + ${item.imgPath}}" />
                     </td>
                 </tr>
                 <tr>
