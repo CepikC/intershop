@@ -11,7 +11,9 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/intershop
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: serik1995
+      SPRING_DATASOURCE_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+        - db_password
     restart: always
 
   db:
@@ -20,7 +22,13 @@ services:
     environment:
       POSTGRES_DB: intershop
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: serik1995
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
     ports:
       - "5432:5432"
     restart: always
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
