@@ -9,6 +9,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -26,28 +29,39 @@ class ItemControllerTest {
     @Mock
     private Model model;
 
+    @Mock
+    private WebSession session;
+
     @InjectMocks
     private ItemController controller;
 
     @Test
     void shouldReturnItemView() {
         Item item = new Item();
-        when(itemService.getItemById(1L)).thenReturn(item);
-        when(cartService.getItemCount(1L)).thenReturn(3);
+        item.setId(1L);
 
-        String view = controller.viewItem(1L, model);
+        when(itemService.getItemById(1L)).thenReturn(Mono.just(item));
+        when(cartService.getItemCount(session, 1L)).thenReturn(Mono.just(3));
 
-        assertThat(view).isEqualTo("item");
+        StepVerifier.create(controller.viewItem(1L, model, session))
+                .expectNext("item")
+                .verifyComplete();
+
         assertThat(item.getCount()).isEqualTo(3);
         verify(model).addAttribute("item", item);
     }
 
     @Test
     void shouldRedirectAfterChangingItemCount() {
-        String view = controller.changeItemCount(1L, "minus");
+        when(cartService.changeItemCount(session, 1L, "minus"))
+                .thenReturn(Mono.empty());
 
-        assertThat(view).isEqualTo("redirect:/items/1");
-        verify(cartService).changeItemCount(1L, "minus");
+        StepVerifier.create(controller.changeItemCountMinus(1L,  session))
+                .expectNext("redirect:/items/1")
+                .verifyComplete();
+
+        verify(cartService).changeItemCount(session, 1L, "minus");
     }
 }
+
 

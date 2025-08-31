@@ -1,26 +1,29 @@
 package kz.yandex.intershop.model;
 
-import jakarta.persistence.*;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
 import java.math.BigDecimal;
 
-@Entity
 @Table(name = "items")
 public class Item {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column("title")
     private String title;
 
-    @Column(nullable = false)
+    @Column("price")
     private BigDecimal price;
 
-    @Column(length = 1000)
+    @Column("description")
     private String description;
 
-    @Column(name = "img_path")
+    @Column("img_path")
     private String imgPath;
 
     @Transient

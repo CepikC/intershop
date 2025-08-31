@@ -38,6 +38,7 @@ databaseChangeLog:
                   autoIncrement: true
                   constraints:
                     primaryKey: true
+                    nullable: false
               - column:
                   name: total_sum
                   type: NUMERIC(10,2)

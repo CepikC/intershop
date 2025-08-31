@@ -3,44 +3,55 @@ package kz.yandex.intershop.service;
 import kz.yandex.intershop.model.Item;
 import kz.yandex.intershop.repository.ItemRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.annotation.SessionScope;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
-@SessionScope
 public class CartService {
 
+    private static final String CART_KEY = "cartItems";
+
     private final ItemRepository itemRepository;
-    private final Map<Long, Integer> cartItems = new HashMap<>();
 
     public CartService(ItemRepository itemRepository) {
         this.itemRepository = itemRepository;
     }
 
-    public List<Item> getItems() {
-        return cartItems.keySet().stream()
-                .map(itemRepository::findById)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .peek(item -> item.setCount(cartItems.get(item.getId())))
-                .collect(Collectors.toList());
+    @SuppressWarnings("unchecked")
+    private Map<Long, Integer> getCart(WebSession session) {
+        return (Map<Long, Integer>) session.getAttributes()
+                .computeIfAbsent(CART_KEY, k -> new HashMap<Long, Integer>());
     }
 
-    public int getItemCount(Long itemId) {
-        return cartItems.getOrDefault(itemId, 0);
+    public Flux<Item> getItems(WebSession session) {
+        return Flux.fromIterable(getCart(session).entrySet())
+                .flatMap(entry ->
+                        itemRepository.findById(entry.getKey())
+                                .map(item -> {
+                                    item.setCount(entry.getValue());
+                                    return item;
+                                })
+                );
     }
 
+    public Mono<Integer> getItemCount(WebSession session, Long itemId) {
+        return Mono.just(getCart(session).getOrDefault(itemId, 0));
+    }
 
-    public BigDecimal getTotal() {
-        return getItems().stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
+    public Mono<BigDecimal> getTotal(WebSession session) {
+        return getItems(session)
+                .map(item -> item.getPrice()
+                        .multiply(BigDecimal.valueOf(item.getCount())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public void changeItemCount(Long itemId, String action) {
+    public Mono<Void> changeItemCount(WebSession session, Long itemId, String action) {
+        Map<Long, Integer> cartItems = getCart(session);
         int count = cartItems.getOrDefault(itemId, 0);
 
         switch (action) {
@@ -51,10 +62,12 @@ public class CartService {
             }
             case "delete" -> cartItems.remove(itemId);
         }
+        return Mono.empty();
     }
 
-    public void clear() {
-        cartItems.clear();
+    public Mono<Void> clear(WebSession session) {
+        getCart(session).clear();
+        return Mono.empty();
     }
 }
 

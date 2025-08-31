@@ -1,35 +1,37 @@
 package kz.yandex.intershop.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.mapping.Column;
 import java.math.BigDecimal;
 
-@Entity
 @Table(name = "order_items")
 public class OrderItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "item_id")
-    private Item item;
+    @Column("item_id")
+    private Long itemId;
 
-    @Column(nullable = false)
+    @Column("count")
     private int count;
 
-    @Column(nullable = false)
+    @Column("price")
     private BigDecimal price;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Order order;
+    @Column("order_id")
+    private Long orderId;
+
+    @Transient // чтобы Spring Data R2DBC не пытался сохранить это поле в БД
+    private Item item;
 
     public OrderItem() {
     }
 
-    public OrderItem(Item item, int count, BigDecimal price) {
-        this.item = item;
+    public OrderItem(Long itemId, int count, BigDecimal price) {
+        this.itemId = itemId;
         this.count = count;
         this.price = price;
     }
@@ -37,8 +39,8 @@ public class OrderItem {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Item getItem() { return item; }
-    public void setItem(Item item) { this.item = item; }
+    public Long getItemId() { return itemId; }
+    public void setItemId(Long itemId) { this.itemId = itemId; }
 
     public int getCount() { return count; }
     public void setCount(int count) { this.count = count; }
@@ -46,6 +48,11 @@ public class OrderItem {
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
 
-    public Order getOrder() { return order; }
-    public void setOrder(Order order) { this.order = order; }
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    public Item getItem() { return item; }
+    public void setItem(Item item) { this.item = item; }
 }

@@ -1,11 +1,12 @@
 package kz.yandex.intershop.controller;
 
-import kz.yandex.intershop.model.Item;
 import kz.yandex.intershop.service.CartService;
 import kz.yandex.intershop.service.ItemService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequestMapping("/items")
@@ -20,20 +21,28 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public String viewItem(@PathVariable Long id, Model model) {
-        Item item = itemService.getItemById(id);
-        int count = cartService.getItemCount(id);
-        item.setCount(count);
-        model.addAttribute("item", item);
-        return "item";
+    public Mono<String> viewItem(@PathVariable Long id, Model model, WebSession session) {
+        return itemService.getItemById(id)
+                .flatMap(item -> cartService.getItemCount(session, id)
+                        .map(count -> {
+                            item.setCount(count);
+                            model.addAttribute("item", item);
+                            return "item";
+                        }))
+                .switchIfEmpty(Mono.just("error/404"));
     }
 
-    @PostMapping("/{id}")
-    public String changeItemCount(
-            @PathVariable Long id,
-            @RequestParam String action
-    ) {
-        cartService.changeItemCount(id, action);
-        return "redirect:/items/" + id;
+    @PostMapping("/plus/{id}")
+    public Mono<String> changeItemCountPlus(@PathVariable Long id,
+                                        WebSession session) {
+        return cartService.changeItemCount(session, id, "plus")
+                .thenReturn("redirect:/items/" + id);
+    }
+
+    @PostMapping("/minus/{id}")
+    public Mono<String> changeItemCountMinus(@PathVariable Long id,
+                                        WebSession session) {
+        return cartService.changeItemCount(session, id, "minus")
+                .thenReturn("redirect:/items/" + id);
     }
 }

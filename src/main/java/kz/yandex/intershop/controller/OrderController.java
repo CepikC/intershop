@@ -1,13 +1,15 @@
 package kz.yandex.intershop.controller;
 
-import kz.yandex.intershop.model.Order;
 import kz.yandex.intershop.service.CartService;
 import kz.yandex.intershop.service.OrderService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Mono;
 
 @Controller
 public class OrderController {
@@ -21,28 +23,35 @@ public class OrderController {
     }
 
     @GetMapping("/orders")
-    public String listOrders(Model model) {
-        List<Order> orders = orderService.getAllOrders();
-        model.addAttribute("orders", orders);
-        return "orders";
+    public Mono<String> listOrders(Model model) {
+        return orderService.getAllOrders()
+                .collectList()
+                .map(orders -> {
+                    model.addAttribute("orders", orders);
+                    return "orders";
+                });
     }
 
     @GetMapping("/orders/{id}")
-    public String viewOrder(
+    public Mono<String> viewOrder(
             @PathVariable Long id,
             @RequestParam(defaultValue = "false") boolean newOrder,
             Model model
     ) {
-        Order order = orderService.getOrderById(id);
-        model.addAttribute("order", order);
-        model.addAttribute("newOrder", newOrder);
-        return "order";
+        return orderService.getOrderById(id)
+                .map(order -> {
+                    model.addAttribute("order", order);
+                    model.addAttribute("newOrder", newOrder);
+                    return "order";
+                });
     }
 
     @PostMapping("/buy")
-    public String buy() {
-        Order newOrder = orderService.createOrderFromCart(cartService.getItems());
-        cartService.clear();
-        return "redirect:/orders/" + newOrder.getId() + "?newOrder=true";
+    public Mono<String> buy(WebSession session) {
+        return cartService.getItems(session).collectList()
+                .flatMap(cartItems -> orderService.createOrderFromCart(cartItems))
+                .flatMap(newOrder -> cartService.clear(session).thenReturn(newOrder))
+                .map(newOrder -> "redirect:/orders/" + newOrder.getId() + "?newOrder=true");
     }
 }
+

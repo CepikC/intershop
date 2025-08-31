@@ -1,63 +1,38 @@
 package kz.yandex.intershop.repository;
 
-import kz.yandex.intershop.model.Item;
 import kz.yandex.intershop.model.Order;
-import kz.yandex.intershop.model.OrderItem;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
+import org.springframework.test.context.ActiveProfiles;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@DataJpaTest
+@DataR2dbcTest
+@ActiveProfiles("test")
 class OrderRepositoryTest {
 
     @Autowired
     private OrderRepository orderRepository;
 
-    @Autowired
-    private ItemRepository itemRepository;
-
-    @BeforeEach
-    void cleanDatabase() {
-        orderRepository.deleteAll(); // убираем данные от Liquibase или других тестов
-    }
-
     @Test
-    void testSaveAndFindById() {
-        // given
-        Item iphone = new Item();
-        iphone.setTitle("Apple iPhone 15 Pro");
-        iphone.setPrice(BigDecimal.valueOf(699_990));
-        iphone.setDescription("Флагманский смартфон");
-        itemRepository.save(iphone); // если нет cascade от OrderItem → Item
+    void shouldSaveAndFindOrder() {
+        Order order = new Order(new BigDecimal("250.50"));
 
-        OrderItem orderItem = new OrderItem();
-        orderItem.setItem(iphone);
-        orderItem.setPrice(iphone.getPrice());
-        orderItem.setCount(1);
+        // Проверка сохранения
+        StepVerifier.create(orderRepository.save(order))
+                .assertNext(saved -> {
+                    assert saved.getId() != null; // id сгенерирован
+                    assert saved.getTotalSum().compareTo(new BigDecimal("250.50")) == 0;
+                    assert saved.getItems().isEmpty(); // Transient поле не участвует в БД
+                })
+                .verifyComplete();
 
-        Order order = new Order();
-        order.setItems(List.of(orderItem));
-        order.setTotalSum(BigDecimal.valueOf(1_500));
-
-        // when
-        Order savedOrder = orderRepository.save(order);
-        Optional<Order> foundOrder = orderRepository.findById(savedOrder.getId());
-
-        // then
-        assertThat(foundOrder).isPresent();
-        assertThat(foundOrder.get().getItems())
-                .hasSize(1)
-                .extracting(oi -> oi.getItem().getTitle())
-                .containsExactly("Apple iPhone 15 Pro");
-        assertThat(foundOrder.get().getTotalSum()).isEqualByComparingTo("1500");
+        // Проверка поиска
+        StepVerifier.create(orderRepository.findAll())
+                .expectNextMatches(o -> o.getTotalSum().compareTo(new BigDecimal("250.50")) == 0)
+                .verifyComplete();
     }
-
-
 }
+

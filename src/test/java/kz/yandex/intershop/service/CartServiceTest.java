@@ -8,13 +8,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.WebSession;
+import org.springframework.web.server.session.InMemoryWebSessionStore;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
@@ -22,101 +31,109 @@ class CartServiceTest {
     @Mock
     private ItemRepository itemRepository;
 
+    @Mock
+    private WebSession session;
+
     @InjectMocks
     private CartService cartService;
 
-    private Item item1;
-    private Item item2;
+    private Map<String, Object> attributes;
+    private Map<Long, Integer> cart;
 
     @BeforeEach
     void setUp() {
-        item1 = new Item();
-        item1.setId(1L);
-        item1.setTitle("Apple");
-        item1.setPrice(BigDecimal.valueOf(10));
+        cart = new HashMap<>();
+        attributes = new HashMap<>();
+        attributes.put("cartItems", cart);
 
-        item2 = new Item();
-        item2.setId(2L);
-        item2.setTitle("Banana");
-        item2.setPrice(BigDecimal.valueOf(5));
+        when(session.getAttributes()).thenReturn(attributes);
     }
 
     @Test
-    void getItems_shouldReturnListWithCounts() {
-        // arrange
-        cartService.changeItemCount(1L, "plus");
-        cartService.changeItemCount(2L, "plus");
-        cartService.changeItemCount(2L, "plus");
+    void shouldAddItemToCart() {
+        StepVerifier.create(cartService.changeItemCount(session, 1L, "plus"))
+                .verifyComplete();
 
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item1));
-        when(itemRepository.findById(2L)).thenReturn(Optional.of(item2));
-
-        // act
-        List<Item> result = cartService.getItems();
-
-        // assert
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getCount()).isEqualTo(1);
-        assertThat(result.get(1).getCount()).isEqualTo(2);
+        assertThat(cart).containsEntry(1L, 1);
     }
 
     @Test
-    void getItemCount_shouldReturnCorrectCount() {
-        cartService.changeItemCount(1L, "plus");
-        cartService.changeItemCount(1L, "plus");
+    void shouldIncreaseAndDecreaseItemCount() {
+        // add twice
+        cartService.changeItemCount(session, 1L, "plus").block();
+        cartService.changeItemCount(session, 1L, "plus").block();
+        assertThat(cart).containsEntry(1L, 2);
 
-        assertThat(cartService.getItemCount(1L)).isEqualTo(2);
-        assertThat(cartService.getItemCount(99L)).isEqualTo(0);
+        // decrease once
+        cartService.changeItemCount(session, 1L, "minus").block();
+        assertThat(cart).containsEntry(1L, 1);
+
+        // decrease to remove
+        cartService.changeItemCount(session, 1L, "minus").block();
+        assertThat(cart).doesNotContainKey(1L);
     }
 
     @Test
-    void getTotal_shouldReturnSumOfItems() {
-        cartService.changeItemCount(1L, "plus"); // 10
-        cartService.changeItemCount(2L, "plus"); // 5
-        cartService.changeItemCount(2L, "plus"); // +5 = 10
+    void shouldDeleteItem() {
+        cart.put(2L, 5);
 
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item1));
-        when(itemRepository.findById(2L)).thenReturn(Optional.of(item2));
+        cartService.changeItemCount(session, 2L, "delete").block();
 
-        BigDecimal total = cartService.getTotal();
-
-        assertThat(total).isEqualTo(BigDecimal.valueOf(20));
+        assertThat(cart).doesNotContainKey(2L);
     }
 
     @Test
-    void changeItemCount_plus_shouldIncreaseCount() {
-        cartService.changeItemCount(1L, "plus");
-        assertThat(cartService.getItemCount(1L)).isEqualTo(1);
+    void shouldClearCart() {
+        cart.put(1L, 2);
+        cart.put(2L, 3);
+
+        cartService.clear(session).block();
+
+        assertThat(cart).isEmpty();
     }
 
     @Test
-    void changeItemCount_minus_shouldDecreaseOrRemove() {
-        cartService.changeItemCount(1L, "plus");
-        cartService.changeItemCount(1L, "plus");
-        cartService.changeItemCount(1L, "minus");
+    void shouldReturnItemCount() {
+        cart.put(3L, 7);
 
-        assertThat(cartService.getItemCount(1L)).isEqualTo(1);
+        StepVerifier.create(cartService.getItemCount(session, 3L))
+                .expectNext(7)
+                .verifyComplete();
 
-        cartService.changeItemCount(1L, "minus");
-        assertThat(cartService.getItemCount(1L)).isEqualTo(0);
+        StepVerifier.create(cartService.getItemCount(session, 99L))
+                .expectNext(0)
+                .verifyComplete();
     }
 
     @Test
-    void changeItemCount_delete_shouldRemoveItem() {
-        cartService.changeItemCount(1L, "plus");
-        cartService.changeItemCount(1L, "delete");
+    void shouldReturnItemsFromRepository() {
+        Item item = new Item();
+        item.setId(10L);
+        item.setPrice(BigDecimal.TEN);
 
-        assertThat(cartService.getItemCount(1L)).isEqualTo(0);
+        cart.put(10L, 2);
+        when(itemRepository.findById(10L)).thenReturn(Mono.just(item));
+
+        StepVerifier.create(cartService.getItems(session))
+                .assertNext(i -> {
+                    assertThat(i.getId()).isEqualTo(10L);
+                    assertThat(i.getCount()).isEqualTo(2);
+                })
+                .verifyComplete();
     }
 
     @Test
-    void clear_shouldRemoveAllItems() {
-        cartService.changeItemCount(1L, "plus");
-        cartService.changeItemCount(2L, "plus");
+    void shouldCalculateTotal() {
+        Item item = new Item();
+        item.setId(1L);
+        item.setPrice(BigDecimal.valueOf(100));
 
-        cartService.clear();
+        cart.put(1L, 3);
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
 
-        assertThat(cartService.getItems()).isEmpty();
+        StepVerifier.create(cartService.getTotal(session))
+                .expectNext(BigDecimal.valueOf(300))
+                .verifyComplete();
     }
 }
 

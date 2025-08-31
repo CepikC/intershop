@@ -1,13 +1,11 @@
 package kz.yandex.intershop.controller;
 
-import kz.yandex.intershop.model.Item;
 import kz.yandex.intershop.service.CartService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
-import java.util.List;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -20,24 +18,41 @@ public class CartController {
     }
 
     @GetMapping
-    public String viewCart(Model model) {
-        List<Item> items = cartService.getItems();
-        BigDecimal total = cartService.getTotal();
-        boolean empty = items.isEmpty();
-
-        model.addAttribute("items", items);
-        model.addAttribute("total", total);
-        model.addAttribute("empty", empty);
-
-        return "cart";
+    public Mono<String> viewCart(Model model, WebSession session) {
+        return cartService.getItems(session).collectList()
+                .flatMap(items ->
+                        cartService.getTotal(session)
+                                .map(total -> {
+                                    model.addAttribute("items", items);
+                                    model.addAttribute("total", total);
+                                    model.addAttribute("empty", items.isEmpty());
+                                    return "cart";
+                                })
+                );
     }
 
-    @PostMapping("/{id}")
-    public String changeCartItemCount(
+    @PostMapping("/plus/{id}")
+    public Mono<String> changeCartItemCountPlus(
             @PathVariable Long id,
-            @RequestParam String action
+            WebSession session
     ) {
-        cartService.changeItemCount(id, action);
-        return "redirect:/cart/items";
+        return cartService.changeItemCount(session, id, "plus")
+                .thenReturn("redirect:/cart/items");
+    }
+    @PostMapping("/minus/{id}")
+    public Mono<String> changeCartItemCountMinus(
+            @PathVariable Long id,
+            WebSession session
+    ) {
+        return cartService.changeItemCount(session, id, "minus")
+                .thenReturn("redirect:/cart/items");
+    }
+    @PostMapping("/delete/{id}")
+    public Mono<String> changeCartItemDelete(
+            @PathVariable Long id,
+            WebSession session
+    ) {
+        return cartService.changeItemCount(session, id, "delete")
+                .thenReturn("redirect:/cart/items");
     }
 }

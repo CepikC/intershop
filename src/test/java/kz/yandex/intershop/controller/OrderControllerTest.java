@@ -10,12 +10,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,41 +34,55 @@ class OrderControllerTest {
     @Mock
     private Model model;
 
+    @Mock
+    private WebSession session;
+
     @InjectMocks
     private OrderController controller;
 
     @Test
     void shouldReturnOrdersView() {
-        when(orderService.getAllOrders()).thenReturn(List.of(new Order()));
+        Order order = new Order();
 
-        String view = controller.listOrders(model);
+        when(orderService.getAllOrders()).thenReturn(Flux.just(order));
 
-        assertThat(view).isEqualTo("orders");
-        verify(model).addAttribute(eq("orders"), any());
+        StepVerifier.create(controller.listOrders(model))
+                .expectNext("orders")
+                .verifyComplete();
+
+        verify(model).addAttribute("orders", List.of(order));
     }
 
     @Test
     void shouldReturnOrderView() {
         Order order = new Order();
-        when(orderService.getOrderById(5L)).thenReturn(order);
+        order.setId(5L);
 
-        String view = controller.viewOrder(5L, true, model);
+        when(orderService.getOrderById(5L)).thenReturn(Mono.just(order));
 
-        assertThat(view).isEqualTo("order");
+        StepVerifier.create(controller.viewOrder(5L, true, model))
+                .expectNext("order")
+                .verifyComplete();
+
         verify(model).addAttribute("order", order);
         verify(model).addAttribute("newOrder", true);
     }
 
     @Test
     void shouldBuyAndRedirectToNewOrder() {
-        Order order = new Order();
-        order.setId(7L);
-        when(cartService.getItems()).thenReturn(List.of(new Item()));
-        when(orderService.createOrderFromCart(any())).thenReturn(order);
+        Item item = new Item();
+        Order newOrder = new Order();
+        newOrder.setId(7L);
 
-        String view = controller.buy();
+        when(cartService.getItems(session)).thenReturn(Flux.just(item));
+        when(orderService.createOrderFromCart(anyList())).thenReturn(Mono.just(newOrder));
+        when(cartService.clear(session)).thenReturn(Mono.empty());
 
-        assertThat(view).isEqualTo("redirect:/orders/7?newOrder=true");
-        verify(cartService).clear();
+        StepVerifier.create(controller.buy(session))
+                .expectNext("redirect:/orders/7?newOrder=true")
+                .verifyComplete();
+
+        verify(cartService).clear(session);
     }
 }
+

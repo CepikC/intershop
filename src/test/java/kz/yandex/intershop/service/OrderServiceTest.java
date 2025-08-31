@@ -2,91 +2,113 @@ package kz.yandex.intershop.service;
 
 import kz.yandex.intershop.model.Item;
 import kz.yandex.intershop.model.Order;
+import kz.yandex.intershop.model.OrderItem;
+import kz.yandex.intershop.repository.ItemRepository;
+import kz.yandex.intershop.repository.OrderItemRepository;
 import kz.yandex.intershop.repository.OrderRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private OrderItemRepository orderItemRepository;
+
+    @Mock
+    private ItemRepository itemRepository;
+
     @InjectMocks
     private OrderService orderService;
 
-    @Test
-    void getAllOrders_shouldReturnList() {
-        Order order = new Order();
-        when(orderRepository.findAll()).thenReturn(List.of(order));
+    private Item testItem;
+    private Order testOrder;
+    private OrderItem testOrderItem;
 
-        List<Order> result = orderService.getAllOrders();
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
 
-        assertThat(result).containsExactly(order);
-        verify(orderRepository).findAll();
-        verifyNoMoreInteractions(orderRepository);
+        testItem = new Item();
+        testItem.setId(1L);
+        testItem.setTitle("Test Item");
+        testItem.setPrice(BigDecimal.valueOf(100));
+        testItem.setCount(2);
+
+        testOrder = new Order();
+        testOrder.setId(10L);
+
+        testOrderItem = new OrderItem();
+        testOrderItem.setId(100L);
+        testOrderItem.setItemId(1L);
+        testOrderItem.setOrderId(10L);
+        testOrderItem.setCount(2);
+        testOrderItem.setPrice(BigDecimal.valueOf(100));
     }
 
     @Test
-    void getOrderById_whenExists_shouldReturnOrder() {
-        Order order = new Order();
-        order.setId(1L);
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+    void getAllOrders_ShouldReturnOrdersWithItems() {
+        when(orderRepository.findAll()).thenReturn(Flux.just(testOrder));
+        when(orderItemRepository.findByOrderId(10L)).thenReturn(Flux.just(testOrderItem));
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
-        Order result = orderService.getOrderById(1L);
-
-        assertThat(result).isEqualTo(order);
-        verify(orderRepository).findById(1L);
+        StepVerifier.create(orderService.getAllOrders())
+                .expectNextMatches(order ->
+                        order.getId().equals(10L) &&
+                                order.getItems().size() == 1 &&
+                                order.getItems().get(0).getItem().getTitle().equals("Test Item"))
+                .verifyComplete();
     }
 
     @Test
-    void getOrderById_whenNotExists_shouldThrowException() {
-        when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+    void getOrderById_ShouldReturnOrder_WhenExists() {
+        when(orderRepository.findById(10L)).thenReturn(Mono.just(testOrder));
+        when(orderItemRepository.findByOrderId(10L)).thenReturn(Flux.just(testOrderItem));
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
-        assertThrows(NoSuchElementException.class, () -> orderService.getOrderById(99L));
-
-        verify(orderRepository).findById(99L);
+        StepVerifier.create(orderService.getOrderById(10L))
+                .expectNextMatches(order ->
+                        order.getId().equals(10L) &&
+                                order.getItems().get(0).getItem().getPrice().equals(BigDecimal.valueOf(100)))
+                .verifyComplete();
     }
 
     @Test
-    void createOrderFromCart_shouldSaveOrderWithItems() {
-        // given
-        Item item1 = new Item();
-        item1.setId(1L);
-        item1.setTitle("Item1");
-        item1.setPrice(BigDecimal.valueOf(100));
-        item1.setCount(2);
+    void getOrderById_ShouldReturnError_WhenNotFound() {
+        when(orderRepository.findById(99L)).thenReturn(Mono.empty());
 
-        Item item2 = new Item();
-        item2.setId(2L);
-        item2.setTitle("Item2");
-        item2.setPrice(BigDecimal.valueOf(50));
-        item2.setCount(1);
+        StepVerifier.create(orderService.getOrderById(99L))
+                .expectErrorMatches(e -> e instanceof RuntimeException &&
+                        e.getMessage().equals("Order not found"))
+                .verify();
+    }
+    @Test
+    void createOrderFromCart_ShouldSaveOrderAndItems() {
+        when(orderRepository.save(any(Order.class)))
+                .thenReturn(Mono.just(testOrder));
+        when(orderItemRepository.saveAll((Iterable<OrderItem>) any()))
+                .thenReturn(Flux.just(testOrderItem));
 
-        Order savedOrder = new Order();
-        savedOrder.setId(10L);
-
-        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
-
-        // when
-        Order result = orderService.createOrderFromCart(List.of(item1, item2));
-
-        // then
-        assertThat(result).isEqualTo(savedOrder);
-        verify(orderRepository).save(any(Order.class));
+        StepVerifier.create(orderService.createOrderFromCart(List.of(testItem)))
+                .expectNextMatches(order ->
+                        order.getId().equals(10L) &&
+                                order.getItems().size() == 1 &&
+                                order.getTotalSum().equals(BigDecimal.valueOf(200)))
+                .verifyComplete();
     }
 }
 

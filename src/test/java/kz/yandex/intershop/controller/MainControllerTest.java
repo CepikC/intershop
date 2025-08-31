@@ -8,8 +8,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.ui.Model;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 
@@ -29,6 +34,9 @@ class MainControllerTest {
     @Mock
     private Model model;
 
+    @Mock
+    private WebSession session;
+
     @InjectMocks
     private MainController controller;
 
@@ -36,14 +44,16 @@ class MainControllerTest {
     void shouldReturnMainView() {
         Item item = new Item();
         item.setId(1L);
+        Page<Item> page = new PageImpl<>(List.of(item));
 
         when(itemService.findAll(anyString(), anyInt(), anyInt(), anyString()))
-                .thenReturn(new PageImpl<>(List.of(item)));
-        when(cartService.getItems()).thenReturn(List.of());
+                .thenReturn(Mono.just(page));
+        when(cartService.getItems(session)).thenReturn(Flux.empty());
 
-        String view = controller.main("search", "NO", 10, 1, model);
+        StepVerifier.create(controller.main("search", "NO", 10, 1, model, session))
+                .expectNext("main")
+                .verifyComplete();
 
-        assertThat(view).isEqualTo("main");
         verify(itemService).findAll("search", 1, 10, "NO");
         verify(model).addAttribute(eq("items"), any());
     }

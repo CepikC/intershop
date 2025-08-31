@@ -1,14 +1,20 @@
 package kz.yandex.intershop.service;
 
 import kz.yandex.intershop.model.Item;
+import kz.yandex.intershop.repository.ItemCustomRepository;
 import kz.yandex.intershop.repository.ItemRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -24,58 +30,69 @@ class ItemServiceTest {
     @Mock
     private ItemRepository itemRepository;
 
+    @Mock
+    private ItemCustomRepository itemCustomRepository;
+
     @InjectMocks
     private ItemService itemService;
 
-    @Test
-    void findAll_withSearch_shouldCallFindByTitleContainingIgnoreCase() {
-        Item item = new Item();
-        Page<Item> page = new PageImpl<>(List.of(item));
+    private Item item;
 
-        when(itemRepository.findByTitleContainingIgnoreCase(eq("phone"), any(Pageable.class)))
-                .thenReturn(page);
-
-        Page<Item> result = itemService.findAll("phone", 1, 10, "ALPHA");
-
-        assertThat(result.getContent()).containsExactly(item);
-        verify(itemRepository).findByTitleContainingIgnoreCase(eq("phone"), any(Pageable.class));
-        verifyNoMoreInteractions(itemRepository);
+    @BeforeEach
+    void setUp() {
+        item = new Item();
+        item.setId(1L);
+        item.setTitle("Test Item");
+        item.setPrice(BigDecimal.TEN);
     }
 
     @Test
-    void findAll_withoutSearch_shouldCallFindAll() {
-        Item item = new Item();
-        Page<Item> page = new PageImpl<>(List.of(item));
+    void shouldFindAllItemsWithSearch() {
+        when(itemCustomRepository.findByTitleContainingIgnoreCase(eq("Test"), any(Pageable.class)))
+                .thenReturn(Flux.just(item));
+        when(itemCustomRepository.countByTitleContainingIgnoreCase("Test"))
+                .thenReturn(Mono.just(1L));
 
-        when(itemRepository.findAll(any(Pageable.class))).thenReturn(page);
-
-        Page<Item> result = itemService.findAll(null, 2, 5, "PRICE");
-
-        assertThat(result.getContent()).containsExactly(item);
-        verify(itemRepository).findAll(any(Pageable.class));
-        verifyNoMoreInteractions(itemRepository);
+        StepVerifier.create(itemService.findAll("Test", 1, 10, "ALPHA"))
+                .assertNext(page -> {
+                    assertThat(page).isInstanceOf(Page.class);
+                    assertThat(page.getContent()).hasSize(1);
+                    assertThat(page.getContent().get(0).getTitle()).isEqualTo("Test Item");
+                    assertThat(page.getTotalElements()).isEqualTo(1);
+                })
+                .verifyComplete();
     }
 
     @Test
-    void getItemById_whenItemExists_shouldReturnItem() {
-        Item item = new Item();
-        item.setId(42L);
+    void shouldFindAllItemsWithoutSearch() {
+        when(itemCustomRepository.findAll(any(Pageable.class)))
+                .thenReturn(Flux.just(item));
+        when(itemCustomRepository.countAll())
+                .thenReturn(Mono.just(1L));
 
-        when(itemRepository.findById(42L)).thenReturn(Optional.of(item));
-
-        Item result = itemService.getItemById(42L);
-
-        assertThat(result).isEqualTo(item);
-        verify(itemRepository).findById(42L);
+        StepVerifier.create(itemService.findAll(null, 1, 10, "PRICE"))
+                .assertNext(page -> {
+                    assertThat(page.getContent()).hasSize(1);
+                    assertThat(page.getContent().get(0).getId()).isEqualTo(1L);
+                })
+                .verifyComplete();
     }
 
     @Test
-    void getItemById_whenItemDoesNotExist_shouldThrowException() {
-        when(itemRepository.findById(anyLong())).thenReturn(Optional.empty());
+    void shouldFindItemById() {
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item));
 
-        assertThrows(NoSuchElementException.class, () -> itemService.getItemById(99L));
+        StepVerifier.create(itemService.getItemById(1L))
+                .expectNextMatches(foundItem -> foundItem.getId().equals(1L))
+                .verifyComplete();
+    }
 
-        verify(itemRepository).findById(99L);
+    @Test
+    void shouldReturnEmptyWhenItemNotFound() {
+        when(itemRepository.findById(99L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(itemService.getItemById(99L))
+                .verifyComplete();
     }
 }
 
