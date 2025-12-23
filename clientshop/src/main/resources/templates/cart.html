@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Корзина товаров</title>
+</head>
+
+<body>
+<a href="/orders" style="float:right;">
+    <b>ЗАКАЗЫ &cudarrr;</b>
+</a>
+<a href="/main/items" style="float:right;">
+    <b>ГЛАВНАЯ &cudarrr;</b>
+</a>
+<table style="width:70%;margin-left:auto;margin-right:auto;">
+    <tr th:each="item : ${items}">
+        <td>
+            <table>
+                <tr>
+                    <td>
+                        <img width="300" height="300" th:src="@{'/images/' + ${item.imgPath}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b th:text="${item.getTitle()}"></b>
+                    </td>
+                    <td>
+                        <b th:text="${item.getPrice()}+' руб.'"></b>
+                    </td>
+                </tr>
+                <tr><td th:text="${item.getDescription()}"></td></tr>
+                <tr>
+                    <td>
+                        <form th:action="@{/cart/items/minus/{id}(id=${item.id})}" method="post" style="display:inline;">
+                            <button type="submit">-</button>
+                        </form>
+                        <span th:text="${item.getCount()}"></span>
+                        <form th:action="@{/cart/items/plus/{id}(id=${item.id})}" method="post" style="display:inline;">
+                            <button type="submit">+</button>
+                        </form>
+                        <form th:action="@{/cart/items/delete/{id}(id=${item.id})}" method="post" style="display:inline;">
+                            <button type="submit" style="float:right;">&cross;</button>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align:right">
+            <b th:text="'Итого: '+${total}+' руб.'"></b>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align:right">
+            <form action="/buy" method="post" th:if="${!empty}">
+                <button>Купить</button>
+            </form>
+        </td>
+    </tr>
+</table>
+</body>
+
+</html>
