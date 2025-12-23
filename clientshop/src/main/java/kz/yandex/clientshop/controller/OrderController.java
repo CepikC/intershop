@@ -2,6 +2,7 @@ package kz.yandex.clientshop.controller;
 
 import kz.yandex.clientshop.service.CartService;
 import kz.yandex.clientshop.service.OrderService;
+import kz.yandex.clientshop.service.PaymentService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,15 +12,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+
 @Controller
 public class OrderController {
 
     private final OrderService orderService;
     private final CartService cartService;
+    private final PaymentService paymentService;
 
-    public OrderController(OrderService orderService, CartService cartService) {
+    public OrderController(OrderService orderService, CartService cartService, PaymentService paymentService) {
         this.orderService = orderService;
         this.cartService = cartService;
+        this.paymentService = paymentService;
     }
 
     @GetMapping("/orders")
@@ -47,11 +52,23 @@ public class OrderController {
     }
 
     @PostMapping("/buy")
-    public Mono<String> buy(WebSession session) {
+    public Mono<String> buy(WebSession session, Model model) {
         return cartService.getItems(session).collectList()
-                .flatMap(cartItems -> orderService.createOrderFromCart(cartItems))
-                .flatMap(newOrder -> cartService.clear(session).thenReturn(newOrder))
-                .map(newOrder -> "redirect:/orders/" + newOrder.getId() + "?newOrder=true");
+                .flatMap(cartItems -> {
+                            BigDecimal totalPrice = orderService.calculateTotalPrice(cartItems);
+                            return paymentService.processOrderPayment(totalPrice)
+                                    .flatMap(paymentSuccess -> {
+                                        if (!paymentSuccess) {
+                                            model.addAttribute("error", "Недостаточно средств");
+                                            return Mono.just("error");
+                                        }
+                                        return orderService.createOrderFromCart(cartItems)
+                                                .flatMap(newOrder ->
+                                                        cartService.clear(session)
+                                                                .thenReturn("redirect:/orders/" + newOrder.getId() + "?newOrder=true")
+                                                );
+                                    });
+                        });
     }
 }
 

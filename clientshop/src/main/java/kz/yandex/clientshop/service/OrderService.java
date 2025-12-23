@@ -98,5 +98,11 @@ public class OrderService {
                                 })
                 );
     }
+
+    public BigDecimal calculateTotalPrice(List<Item> items) {
+        return items.stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
 

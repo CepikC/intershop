@@ -20,8 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
@@ -75,11 +74,17 @@ class OrderControllerTest {
         Order newOrder = new Order();
         newOrder.setId(7L);
 
+        Model model = mock(Model.class);
+
         when(cartService.getItems(session)).thenReturn(Flux.just(item));
         when(orderService.createOrderFromCart(anyList())).thenReturn(Mono.just(newOrder));
         when(cartService.clear(session)).thenReturn(Mono.empty());
+        when(orderService.createOrderFromCart(anyList()))
+                .thenReturn(Mono.just(newOrder));
+        when(cartService.clear(session))
+                .thenReturn(Mono.empty());
 
-        StepVerifier.create(controller.buy(session))
+        StepVerifier.create(controller.buy(session, model))
                 .expectNext("redirect:/orders/7?newOrder=true")
                 .verifyComplete();
 
