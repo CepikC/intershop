@@ -1,5 +1,6 @@
 package kz.yandex.intershop.controller;
 
+import kz.yandex.intershop.service.CachedItemService;
 import kz.yandex.intershop.service.CartService;
 import kz.yandex.intershop.service.ItemService;
 import org.springframework.stereotype.Controller;
@@ -12,17 +13,17 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/items")
 public class ItemController {
 
-    private final ItemService itemService;
+    private final CachedItemService cachedItemService;
     private final CartService cartService;
 
-    public ItemController(ItemService itemService, CartService cartService) {
-        this.itemService = itemService;
+    public ItemController(CachedItemService cachedItemService, CartService cartService) {
+        this.cachedItemService = cachedItemService;
         this.cartService = cartService;
     }
 
     @GetMapping("/{id}")
     public Mono<String> viewItem(@PathVariable Long id, Model model, WebSession session) {
-        return itemService.getItemById(id)
+        return cachedItemService.getItemById(id)
                 .flatMap(item -> cartService.getItemCount(session, id)
                         .map(count -> {
                             item.setCount(count);

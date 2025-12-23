@@ -1,6 +1,7 @@
 package kz.yandex.intershop.controller;
 
 import kz.yandex.intershop.model.Item;
+import kz.yandex.intershop.service.CachedItemService;
 import kz.yandex.intershop.service.CartService;
 import kz.yandex.intershop.service.ItemService;
 import org.springframework.stereotype.Controller;
@@ -16,10 +17,10 @@ import java.util.List;
 @RequestMapping("/main/items")
 public class MainController {
 
-    private final ItemService itemService;
+    private final CachedItemService itemService;
     private final CartService cartService;
 
-    public MainController(ItemService itemService, CartService cartService) {
+    public MainController(CachedItemService itemService, CartService cartService) {
         this.itemService = itemService;
         this.cartService = cartService;
     }

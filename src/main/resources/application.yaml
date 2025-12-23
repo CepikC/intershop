@@ -4,6 +4,10 @@ spring:
     username: postgres
     password: serik1995
 
+  redis:
+    host: redis
+    port: 6379
+
   liquibase:
     url: jdbc:postgresql://localhost:5432/intershop
     user: postgres
