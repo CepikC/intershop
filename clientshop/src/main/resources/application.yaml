@@ -19,5 +19,6 @@ spring:
     init:
       mode: never
 payment-app:
-  host: localhost
+#  host: localhost
+  host: server-payment
   port: 8081

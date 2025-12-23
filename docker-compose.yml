@@ -1,13 +1,16 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    container_name: spring-app
+  client-shop:
+    image: client-shop:latest
+    build:
+      context: .
+      dockerfile: clientshop/Dockerfile
     ports:
       - "8080:8080"
     depends_on:
       - db
+      - redis
     environment:
       SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/intershop
       SPRING_R2DBC_USERNAME: postgres
@@ -15,9 +18,20 @@ services:
       SPRING_LIQUIBASE_URL: jdbc:postgresql://db:5432/intershop
       SPRING_LIQUIBASE_USER: postgres
       SPRING_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_password
+      SPRING_DATA_REDIS_HOST: redis
     secrets:
         - db_password
     restart: always
+
+  server-payment:
+    image: server-payment:latest
+    build:
+      context: .
+      dockerfile: serverpayment/Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - client-shop
 
   db:
     image: postgres:16
@@ -31,6 +45,11 @@ services:
     ports:
       - "5432:5432"
     restart: always
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
 
 secrets:
   db_password:
