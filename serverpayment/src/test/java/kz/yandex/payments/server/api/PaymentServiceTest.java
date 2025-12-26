@@ -1,6 +1,5 @@
 package kz.yandex.payments.server.api;
 
-import kz.yandex.payments.server.domain.BalanceResponse;
 import kz.yandex.payments.server.domain.PaymentRequest;
 import kz.yandex.payments.server.domain.PaymentResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.test.StepVerifier;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -35,24 +35,27 @@ class PaymentServiceTest {
         String userId = "1";
         BigDecimal expectedBalance = new BigDecimal("1500000.00");
 
-        BalanceResponse result = paymentService.getBalance(userId).block();
-
-        assertThat(result).isNotNull();
-        assertThat(result.getUserId()).isEqualTo(userId);
-        assertThat(result.getBalance()).isEqualTo(expectedBalance);
+        StepVerifier.create(paymentService.getBalance(userId))
+                .assertNext(result -> {
+                    assertThat(result.getUserId()).isEqualTo(userId);
+                    assertThat(result.getBalance()).isEqualTo(expectedBalance);
+                })
+                .verifyComplete();
     }
 
     @Test
     void getBalance_ShouldGenerateRandomBalance_WhenUserDoesNotExist() {
         String userId = "newUser";
 
-        BalanceResponse result = paymentService.getBalance(userId).block();
+        StepVerifier.create(paymentService.getBalance(userId))
+                .assertNext(result -> {
+                    assertThat(result.getUserId()).isEqualTo(userId);
+                    assertThat(result.getBalance()).isNotNull();
+                    assertThat(result.getBalance())
+                            .isBetween(BigDecimal.ZERO, new BigDecimal("3000000.00"));
+                })
+                .verifyComplete();
 
-        assertThat(result).isNotNull();
-        assertThat(result.getUserId()).isEqualTo(userId);
-        assertThat(result.getBalance()).isNotNull();
-        assertThat(result.getBalance()).isGreaterThanOrEqualTo(BigDecimal.ZERO);
-        assertThat(result.getBalance()).isLessThanOrEqualTo(new BigDecimal("3000000"));
         assertThat(userBalances).containsKey(userId);
     }
 
@@ -66,14 +69,16 @@ class PaymentServiceTest {
                 .userId(userId)
                 .amount(paymentAmount);
 
-        PaymentResponse result = paymentService.processPayment(request).block();
+        StepVerifier.create(paymentService.processPayment(request))
+                .assertNext(result -> {
+                    assertThat(result.getUserId()).isEqualTo(userId);
+                    assertThat(result.getAmount()).isEqualTo(paymentAmount);
+                    assertThat(result.getRemainingBalance()).isEqualTo(expectedNewBalance);
+                    assertThat(result.getStatus()).isEqualTo(PaymentResponse.StatusEnum.SUCCESS);
+                    assertThat(result.getMessage()).isEqualTo("Платеж успешно обработан");
+                })
+                .verifyComplete();
 
-        assertThat(result).isNotNull();
-        assertThat(result.getUserId()).isEqualTo(userId);
-        assertThat(result.getAmount()).isEqualTo(paymentAmount);
-        assertThat(result.getRemainingBalance()).isEqualTo(expectedNewBalance);
-        assertThat(result.getStatus()).isEqualTo(PaymentResponse.StatusEnum.SUCCESS);
-        assertThat(result.getMessage()).isEqualTo("Платеж успешно обработан");
         assertThat(userBalances.get(userId)).isEqualTo(expectedNewBalance);
     }
 
@@ -86,14 +91,17 @@ class PaymentServiceTest {
                 .userId(userId)
                 .amount(paymentAmount);
 
-        PaymentResponse result = paymentService.processPayment(request).block();
+        StepVerifier.create(paymentService.processPayment(request))
+                .assertNext(result -> {
+                    assertThat(result.getUserId()).isEqualTo(userId);
+                    assertThat(result.getAmount()).isEqualTo(paymentAmount);
+                    assertThat(result.getRemainingBalance()).isEqualTo(BigDecimal.ZERO);
+                    assertThat(result.getStatus()).isEqualTo(PaymentResponse.StatusEnum.FAILED);
+                    assertThat(result.getMessage())
+                            .isEqualTo("Не найден пользователь по id " + userId);
+                })
+                .verifyComplete();
 
-        assertThat(result).isNotNull();
-        assertThat(result.getUserId()).isEqualTo(userId);
-        assertThat(result.getAmount()).isEqualTo(paymentAmount);
-        assertThat(result.getRemainingBalance()).isEqualTo(BigDecimal.ZERO);
-        assertThat(result.getStatus()).isEqualTo(PaymentResponse.StatusEnum.FAILED);
-        assertThat(result.getMessage()).isEqualTo("Не найден пользователь по id " + userId);
         assertThat(userBalances).doesNotContainKey(userId);
     }
 
@@ -107,11 +115,13 @@ class PaymentServiceTest {
                 .userId(userId)
                 .amount(paymentAmount);
 
-        PaymentResponse result = paymentService.processPayment(request).block();
+        StepVerifier.create(paymentService.processPayment(request))
+                .assertNext(result -> {
+                    assertThat(result.getStatus()).isEqualTo(PaymentResponse.StatusEnum.SUCCESS);
+                    assertThat(result.getRemainingBalance()).isEqualTo(initialBalance);
+                })
+                .verifyComplete();
 
-        assertThat(result).isNotNull();
-        assertThat(result.getStatus()).isEqualTo(PaymentResponse.StatusEnum.SUCCESS);
-        assertThat(result.getRemainingBalance()).isEqualTo(initialBalance);
         assertThat(userBalances.get(userId)).isEqualTo(initialBalance);
     }
 
@@ -120,16 +130,19 @@ class PaymentServiceTest {
         String userId1 = "newUser1";
         String userId2 = "newUser2";
 
-        BalanceResponse result1 = paymentService.getBalance(userId1).block();
-        BalanceResponse result2 = paymentService.getBalance(userId2).block();
+        StepVerifier.create(paymentService.getBalance(userId1))
+                .assertNext(result ->
+                        assertThat(result.getBalance())
+                                .isBetween(BigDecimal.ZERO, new BigDecimal("3000000.00"))
+                )
+                .verifyComplete();
 
-        assertThat(result1).isNotNull();
-        assertThat(result2).isNotNull();
-        assertThat(result1.getUserId()).isEqualTo(userId1);
-        assertThat(result2.getUserId()).isEqualTo(userId2);
-
-        assertThat(result1.getBalance()).isBetween(BigDecimal.ZERO, new BigDecimal("3000000.00"));
-        assertThat(result2.getBalance()).isBetween(BigDecimal.ZERO, new BigDecimal("3000000.00"));
+        StepVerifier.create(paymentService.getBalance(userId2))
+                .assertNext(result ->
+                        assertThat(result.getBalance())
+                                .isBetween(BigDecimal.ZERO, new BigDecimal("3000000.00"))
+                )
+                .verifyComplete();
 
         assertThat(userBalances).containsKeys(userId1, userId2);
     }

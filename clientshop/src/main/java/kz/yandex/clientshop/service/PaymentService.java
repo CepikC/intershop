@@ -1,14 +1,13 @@
 package kz.yandex.clientshop.service;
 
 import kz.yandex.clientshop.client.api.PaymentsApi;
-import kz.yandex.clientshop.client.domain.BalanceResponse;
 import kz.yandex.clientshop.client.domain.PaymentRequest;
 import kz.yandex.clientshop.client.domain.PaymentResponse;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class PaymentService {
@@ -20,30 +19,13 @@ public class PaymentService {
     }
 
     public Mono<Boolean> processOrderPayment(BigDecimal totalPrice) {
-        final String userId = UUID.randomUUID().toString();
-        return checkBalance(totalPrice, userId)
-                .flatMap(balanceStatus -> processPayment(balanceStatus, totalPrice, userId));
-    }
-
-    private Mono<Boolean> checkBalance(BigDecimal totalPrice, String userId) {
-        return paymentsApi.getBalance(userId)
-                .map(balance -> isSufficientBalance(balance, totalPrice));
-    }
-
-    private Mono<Boolean> processPayment(Boolean balanceStatus, BigDecimal totalPrice, String userId) {
-        if (!balanceStatus) {
-            return Mono.just(false);
-        }
-        final PaymentRequest paymentRequest = new PaymentRequest()
+        String userId = String.valueOf(ThreadLocalRandom.current().nextInt(1, 4));
+        PaymentRequest paymentRequest = new PaymentRequest()
                 .userId(userId)
                 .amount(totalPrice);
-
         return paymentsApi.processPayment(paymentRequest)
-                .map(this::isSuccessfulPayment);
-    }
-
-    private Boolean isSufficientBalance(BalanceResponse balance, BigDecimal totalPrice) {
-        return balance != null && balance.getBalance().compareTo(totalPrice) >= 0;
+                .map(this::isSuccessfulPayment)
+                .onErrorReturn(false);
     }
 
     private Boolean isSuccessfulPayment(PaymentResponse payment) {

@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class PaymentService {
@@ -42,38 +43,39 @@ public class PaymentService {
      */
     public Mono<PaymentResponse> processPayment(PaymentRequest request) {
         return Mono.fromCallable(() -> {
-            BigDecimal currentBalance = userBalances.get(request.getUserId());
-
-            if (currentBalance == null) {
-                return new PaymentResponse(
-                        request.getUserId(),
+            AtomicReference<PaymentResponse> responseRef = new AtomicReference<>();
+            userBalances.compute(request.getUserId(), (userId, currentBalance) -> {
+                if (currentBalance == null) {
+                    responseRef.set(new PaymentResponse(
+                            userId,
+                            request.getAmount(),
+                            BigDecimal.ZERO,
+                            PaymentResponse.StatusEnum.FAILED,
+                            "Не найден пользователь по id " + userId
+                    ));
+                    return null;
+                }
+                if (currentBalance.compareTo(request.getAmount()) < 0) {
+                    responseRef.set(new PaymentResponse(
+                            userId,
+                            request.getAmount(),
+                            currentBalance,
+                            PaymentResponse.StatusEnum.FAILED,
+                            "Недостаточно средств для платежа"
+                    ));
+                    return currentBalance;
+                }
+                BigDecimal newBalance = currentBalance.subtract(request.getAmount());
+                responseRef.set(new PaymentResponse(
+                        userId,
                         request.getAmount(),
-                        BigDecimal.ZERO,
-                        PaymentResponse.StatusEnum.FAILED,
-                        "Не найден пользователь по id " + request.getUserId()
-                );
-            }
-
-            if (currentBalance.compareTo(request.getAmount()) < 0) {
-                return new PaymentResponse(
-                        request.getUserId(),
-                        request.getAmount(),
-                        currentBalance,
-                        PaymentResponse.StatusEnum.FAILED,
-                        "Недостаточно средств для платежа"
-                );
-            }
-
-            BigDecimal newBalance = currentBalance.subtract(request.getAmount());
-            userBalances.put(request.getUserId(), newBalance);
-
-            return new PaymentResponse(
-                    request.getUserId(),
-                    request.getAmount(),
-                    newBalance,
-                    PaymentResponse.StatusEnum.SUCCESS,
-                    "Платеж успешно обработан"
-            );
+                        newBalance,
+                        PaymentResponse.StatusEnum.SUCCESS,
+                        "Платеж успешно обработан"
+                ));
+                return newBalance;
+            });
+            return responseRef.get();
         });
     }
 }
