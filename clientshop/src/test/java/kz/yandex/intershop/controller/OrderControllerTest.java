@@ -5,6 +5,7 @@ import kz.yandex.clientshop.model.Item;
 import kz.yandex.clientshop.model.Order;
 import kz.yandex.clientshop.service.CartService;
 import kz.yandex.clientshop.service.OrderService;
+import kz.yandex.clientshop.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +37,7 @@ class OrderControllerTest {
     private Model model;
 
     @Mock
-    private WebSession session;
+    private PaymentService paymentService;
 
     @InjectMocks
     private OrderController controller;
@@ -71,24 +73,33 @@ class OrderControllerTest {
     @Test
     void shouldBuyAndRedirectToNewOrder() {
         Item item = new Item();
+        item.setPrice(BigDecimal.TEN);
+        item.setCount(1);
+
         Order newOrder = new Order();
         newOrder.setId(7L);
 
-        Model model = mock(Model.class);
+        when(cartService.getItems())
+                .thenReturn(Flux.just(item));
 
-        when(cartService.getItems(session)).thenReturn(Flux.just(item));
-        when(orderService.createOrderFromCart(anyList())).thenReturn(Mono.just(newOrder));
-        when(cartService.clear(session)).thenReturn(Mono.empty());
+        when(orderService.calculateTotalPrice(anyList()))
+                .thenReturn(BigDecimal.TEN);
+
+        when(paymentService.processOrderPayment(BigDecimal.TEN))
+                .thenReturn(Mono.just(true));
+
         when(orderService.createOrderFromCart(anyList()))
                 .thenReturn(Mono.just(newOrder));
-        when(cartService.clear(session))
+
+        when(cartService.clear())
                 .thenReturn(Mono.empty());
 
-        StepVerifier.create(controller.buy(session, model))
+        StepVerifier.create(controller.buy(model))
                 .expectNext("redirect:/orders/7?newOrder=true")
                 .verifyComplete();
 
-        verify(cartService).clear(session);
+        verify(paymentService).processOrderPayment(BigDecimal.TEN);
+        verify(cartService).clear();
     }
 }
 

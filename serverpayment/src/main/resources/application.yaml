@@ -4,3 +4,9 @@ server:
 spring:
   application:
     name: payments
+  # Security
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8180/realms/intershop/protocol/openid-connect/certs

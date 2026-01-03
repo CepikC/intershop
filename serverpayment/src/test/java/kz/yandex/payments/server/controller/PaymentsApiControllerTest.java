@@ -1,11 +1,13 @@
 package kz.yandex.payments.server.controller;
 
 import kz.yandex.payments.server.api.PaymentService;
+import kz.yandex.payments.server.config.SecurityConfigTest;
 import kz.yandex.payments.server.domain.BalanceResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
@@ -15,6 +17,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(PaymentsApiController.class)
+@Import(SecurityConfigTest.class)
 class PaymentsApiControllerTest {
 
     @Autowired

@@ -1,10 +1,13 @@
 package kz.yandex.clientshop.controller;
 
 import kz.yandex.clientshop.service.CartService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.WebSession;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 @Controller
@@ -18,10 +21,11 @@ public class CartController {
     }
 
     @GetMapping
-    public Mono<String> viewCart(Model model, WebSession session) {
-        return cartService.getItems(session).collectList()
+    @PreAuthorize("isAuthenticated() and hasAuthority('USER')")
+    public Mono<String> viewCart(Model model) {
+        return cartService.getItems().collectList()
                 .flatMap(items ->
-                        cartService.getTotal(session)
+                        cartService.getTotal()
                                 .map(total -> {
                                     model.addAttribute("items", items);
                                     model.addAttribute("total", total);
@@ -32,27 +36,27 @@ public class CartController {
     }
 
     @PostMapping("/plus/{id}")
+    @PreAuthorize("isAuthenticated() and hasAuthority('USER')")
     public Mono<String> changeCartItemCountPlus(
-            @PathVariable Long id,
-            WebSession session
+            @PathVariable Long id
     ) {
-        return cartService.changeItemCount(session, id, "plus")
+        return cartService.changeItemCount(id, "plus")
                 .thenReturn("redirect:/cart/items");
     }
     @PostMapping("/minus/{id}")
+    @PreAuthorize("isAuthenticated() and hasAuthority('USER')")
     public Mono<String> changeCartItemCountMinus(
-            @PathVariable Long id,
-            WebSession session
+            @PathVariable Long id
     ) {
-        return cartService.changeItemCount(session, id, "minus")
+        return cartService.changeItemCount(id, "minus")
                 .thenReturn("redirect:/cart/items");
     }
     @PostMapping("/delete/{id}")
+    @PreAuthorize("isAuthenticated() and hasAuthority('USER')")
     public Mono<String> changeCartItemDelete(
-            @PathVariable Long id,
-            WebSession session
+            @PathVariable Long id
     ) {
-        return cartService.changeItemCount(session, id, "delete")
+        return cartService.changeItemCount(id, "delete")
                 .thenReturn("redirect:/cart/items");
     }
 }

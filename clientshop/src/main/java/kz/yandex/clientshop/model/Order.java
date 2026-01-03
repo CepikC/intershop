@@ -22,6 +22,9 @@ public class Order {
     @Transient // <- чтобы БД не пыталась сохранять как колонку
     private List<OrderItem> items = new ArrayList<>();
 
+    @Column("user_id")
+    private Long userId;
+
     public Order() {
     }
 
@@ -38,5 +41,7 @@ public class Order {
     public void setTotalSum(BigDecimal totalSum) { this.totalSum = totalSum; }
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId;}
 }
 

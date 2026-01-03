@@ -8,6 +8,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.ui.Model;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Flux;
@@ -40,10 +46,26 @@ class CartControllerTest {
         Item item = new Item();
         item.setId(1L);
 
-        when(cartService.getItems(session)).thenReturn(Flux.just(item));
-        when(cartService.getTotal(session)).thenReturn(Mono.just(BigDecimal.TEN));
+        when(cartService.getItems()).thenReturn(Flux.just(item));
+        when(cartService.getTotal()).thenReturn(Mono.just(BigDecimal.TEN));
 
-        StepVerifier.create(controller.viewCart(model, session))
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(
+                        "user1",
+                        "password",
+                        List.of(new SimpleGrantedAuthority("USER"))
+                );
+
+        SecurityContext securityContext = new SecurityContextImpl(authentication);
+
+        StepVerifier.create(
+                        controller.viewCart(model)
+                                .contextWrite(
+                                        ReactiveSecurityContextHolder.withSecurityContext(
+                                                Mono.just(securityContext)
+                                        )
+                                )
+                )
                 .expectNext("cart")
                 .verifyComplete();
 

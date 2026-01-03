@@ -18,6 +18,22 @@ spring:
   sql:
     init:
       mode: never
+  # Security
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: intershop-client
+            client-secret: xODGIdLaADbA3jcBBa4HV1pa2MAeDxMQ
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            authorization-uri: http://localhost:8180/realms/intershop/protocol/openid-connect/auth
+            token-uri: http://localhost:8180/realms/intershop/protocol/openid-connect/token
+            jwk-set-uri: http://localhost:8180/realms/intershop/protocol/openid-connect/certs
+
 payment-app:
 #  host: localhost
   host: server-payment

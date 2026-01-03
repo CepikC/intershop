@@ -3,6 +3,7 @@ package kz.yandex.clientshop.controller;
 import kz.yandex.clientshop.service.CartService;
 import kz.yandex.clientshop.service.OrderService;
 import kz.yandex.clientshop.service.PaymentService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,7 @@ public class OrderController {
     }
 
     @GetMapping("/orders")
+    @PreAuthorize("isAuthenticated() and hasAuthority('USER')")
     public Mono<String> listOrders(Model model) {
         return orderService.getAllOrders()
                 .collectList()
@@ -38,6 +40,7 @@ public class OrderController {
     }
 
     @GetMapping("/orders/{id}")
+    @PreAuthorize("isAuthenticated() and hasAuthority('USER')")
     public Mono<String> viewOrder(
             @PathVariable Long id,
             @RequestParam(defaultValue = "false") boolean newOrder,
@@ -52,8 +55,9 @@ public class OrderController {
     }
 
     @PostMapping("/buy")
-    public Mono<String> buy(WebSession session, Model model) {
-        return cartService.getItems(session).collectList()
+    @PreAuthorize("isAuthenticated() and hasAuthority('USER')")
+    public Mono<String> buy(Model model) {
+        return cartService.getItems().collectList()
                 .flatMap(cartItems -> {
                             BigDecimal totalPrice = orderService.calculateTotalPrice(cartItems);
                             return paymentService.processOrderPayment(totalPrice)
@@ -64,7 +68,7 @@ public class OrderController {
                                         }
                                         return orderService.createOrderFromCart(cartItems)
                                                 .flatMap(newOrder ->
-                                                        cartService.clear(session)
+                                                        cartService.clear()
                                                                 .thenReturn("redirect:/orders/" + newOrder.getId() + "?newOrder=true")
                                                 );
                                     });

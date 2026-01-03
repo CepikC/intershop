@@ -1,17 +1,20 @@
 package kz.yandex.intershop.repository;
 
+import kz.yandex.clientshop.IntershopApplication;
 import kz.yandex.clientshop.model.Item;
 import kz.yandex.clientshop.repository.ItemRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 
 @DataR2dbcTest
 @ActiveProfiles("test")
+@ContextConfiguration(classes = IntershopApplication.class)
 class ItemRepositoryTest {
 
     @Autowired

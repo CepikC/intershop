@@ -273,3 +273,90 @@ databaseChangeLog:
               - column:
                   name: img_path
                   value: "first.png"
+  - changeSet:
+      id: 3
+      author: serik
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: users
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: "1"
+              - column:
+                  name: password
+                  value: "$2a$10$wXPY16G/JEgBmr83E993Pucpj83S1pNqw6uvnilWzYexYS2AtKDJi"
+              - column:
+                  name: role
+                  value: "USER"
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: "2"
+              - column:
+                  name: password
+                  value: "$2a$10$A.s/ZPIkfcFJROxHwAYNbOQVGP1dMslrcFs5jWgtanyVJwTO3BWo2"
+              - column:
+                  name: role
+                  value: "USER"
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: "3"
+              - column:
+                  name: password
+                  value: "$2a$10$awCB8M43mDaczrvW/SG17OlDYfD..uZy3IKy41eZjsZ.XOAj9CD9O"
+              - column:
+                  name: role
+                  value: "USER"
+
+  - changeSet:
+      id: 4
+      author: serik
+      preConditions:
+        onFail: MARK_RAN
+        tableExists:
+          tableName: orders
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
